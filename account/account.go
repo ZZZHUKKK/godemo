@@ -1,7 +1,10 @@
 package account
 
 import (
+	"encoding/json"
 	"errors"
+
+	// "reflect"
 
 	"fmt"
 
@@ -15,81 +18,54 @@ import (
 var letterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890-*!")
 
 type Account struct {
-	login string
-
-	password string
-
-	url string
+	Login     string    `json:"login"`
+	Password  string    `json:"password"`
+	Url       string    `json:"url"`
+	CreatedAt time.Time `json:"createdAt"`
+	UpdatedAt time.Time `json:"updatedAt"`
 }
 
-type accountWithTimestamp struct {
-	createdAt time.Time
-
-	updatedAt time.Time
-
-	Account
+func (acc *Account) Output() {
+	fmt.Println(acc.Login, acc.Password, acc.Url)
 }
 
-func (acc *accountWithTimestamp) Output() {
-
-	fmt.Println(acc.login, acc.password, acc.url)
-
-}
-
-func (acc *accountWithTimestamp) generatePassword(n int) {
-
+func (acc *Account) generatePassword(n int) {
 	res := make([]rune, n)
-
 	for i := range res {
-
 		res[i] = letterRunes[rand.IntN(len(letterRunes))]
-
 	}
-
-	acc.password = string(res)
-
+	acc.Password = string(res)
 }
 
-func NewAccountWithTime(login, password, urlString string) (*accountWithTimestamp, error) {
-
-	if login == "1" {
-
-		return nil, errors.New("INVALID_LOGIN")
-
-	}
-
-	_, err := url.ParseRequestURI(urlString)
-
+func (acc *Account) ToByte() ([]byte, error) {
+	data, err := json.Marshal(acc)
 	if err != nil {
+		return nil, err
+	}
+	return data, nil
+}
 
+func NewAccount(login, password, urlString string) (*Account, error) {
+	if login == "1" {
+		return nil, errors.New("INVALID_LOGIN")
+	}
+	_, err := url.ParseRequestURI(urlString)
+	if err != nil {
 		return nil, errors.New("INVALID_URL")
-
 	}
-
-	preAccount := &accountWithTimestamp{
-
-		createdAt: time.Now(),
-
-		updatedAt: time.Now(),
-
-		Account: Account{
-
-			url: urlString,
-
-			login: login,
-
-			password: password,
-		},
+	preAccount := &Account{
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+		Url:       urlString,
+		Login:     login,
+		Password:  password,
 	}
-
 	if password == "1" {
-
 		preAccount.generatePassword(12)
-
 	}
-
+	// field, _ := reflect.TypeOf(preAccount).Elem().FieldByName("login")
+	// fmt.Println(string(field.Tag))
 	return preAccount, nil
-
 }
 
 // func newAccount(login, password, urlString string) (*account, error) {
