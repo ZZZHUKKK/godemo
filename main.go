@@ -2,6 +2,7 @@ package main
 
 import (
 	"demo/password/account"
+	"demo/password/files"
 
 	"fmt"
 
@@ -9,6 +10,8 @@ import (
 )
 
 func main() {
+	files.ReadFile()
+	files.WriteFile("Hello Writefile!", "52")
 
 	login := promptData("Введите логин")
 

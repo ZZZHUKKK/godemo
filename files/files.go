@@ -1,9 +1,29 @@
 package files
 
-func ReadFile() {
+import (
+	"fmt"
+	"os"
+)
 
+func ReadFile() {
+	data, err := os.ReadFile("52")
+	if err != nil {
+		fmt.Print(err)
+		return
+	}
+	fmt.Println(string(data))
 }
 
-func WriteFile() {
-
+func WriteFile(content string, name string) {
+	file, err := os.Create(name)
+	if err != nil {
+		fmt.Println(err)
+	}
+	defer file.Close()
+	_, err = file.WriteString(content)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	fmt.Println("Запись успешна")
 }
