@@ -2,7 +2,6 @@ package main
 
 import (
 	"demo/password/account"
-	"demo/password/files"
 
 	"fmt"
 
@@ -11,6 +10,7 @@ import (
 
 func main() {
 	var choice int
+	vault := account.NewVault()
 Main:
 	for {
 		fmt.Println(`Введите цифру:
@@ -21,21 +21,39 @@ Main:
 		fmt.Scan(&choice)
 		switch choice {
 		case 1:
-			createAccount()
+			createAccount(vault)
 		case 2:
-			foundAccount()
+			findAccount(vault)
 		case 3:
-			deleteAccount()
+			deleteAccount(vault)
 		case 4:
 			break Main
 		}
 	}
 }
 
-func foundAccount()  {}
-func deleteAccount() {}
+func findAccount(vault *account.Vault) {
+	url := promptData("Введите url: ")
+	accounts := vault.FindAcc(url)
+	if len(accounts) == 0 {
+		color.Red("Акаунтов не найдено")
+	}
+	for _, acc := range accounts {
+		acc.Output()
+	}
 
-func createAccount() {
+}
+func deleteAccount(vault *account.Vault) {
+	url := promptData("Введите url: ")
+	isDeleted := vault.DeleteAcc(url)
+	if isDeleted {
+		color.Green("Аккаунт удален")
+	} else {
+		color.Red("Не найдено")
+	}
+}
+
+func createAccount(vault *account.Vault) {
 	login := promptData("Введите логин")
 	password := promptData("Введите пароль")
 	url := promptData("Введите URL")
@@ -45,12 +63,7 @@ func createAccount() {
 		return
 	}
 	fmt.Println(myAccount)
-	byteAccount, err := myAccount.ToByte()
-	if err != nil {
-		fmt.Println("Неверный формат JSON")
-		return
-	}
-	files.WriteFile(byteAccount, "JSONbase")
+	vault.AddAccount(*myAccount)
 }
 
 func promptData(prompt string) string {
