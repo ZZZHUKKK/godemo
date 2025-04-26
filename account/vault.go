@@ -1,13 +1,30 @@
 package account
 
 import (
-	"demo/password/files"
 	"encoding/json"
 	"strings"
 	"time"
 
 	"github.com/fatih/color"
 )
+
+type ByteReader interface {
+	Read() ([]byte, error)
+}
+
+type ByteWriter interface {
+	Write([]byte)
+}
+
+type Db interface {
+	ByteReader
+	ByteWriter
+}
+
+type VaultWithDB struct {
+	Vault
+	db Db
+}
 
 type Vault struct {
 	Accounts  []Account `json:"accounts"`
@@ -22,7 +39,7 @@ func (vault *Vault) ToByte() ([]byte, error) {
 	return data, nil
 }
 
-func (vault *Vault) FindAcc(urlAcc string) []Account {
+func (vault *VaultWithDB) FindAcc(urlAcc string) []Account {
 	var accounts []Account
 	for _, account := range vault.Accounts {
 		if strings.Contains(account.Url, urlAcc) {
@@ -32,7 +49,7 @@ func (vault *Vault) FindAcc(urlAcc string) []Account {
 	return accounts
 }
 
-func (vault *Vault) DeleteAcc(urlAcc string) bool {
+func (vault *VaultWithDB) DeleteAcc(urlAcc string) bool {
 	var accounts []Account
 	isDeleted := false
 	for _, account := range vault.Accounts {
@@ -45,30 +62,33 @@ func (vault *Vault) DeleteAcc(urlAcc string) bool {
 	}
 	vault.Accounts = accounts
 	vault.UpdatedAT = time.Now()
-	data, err := vault.ToByte()
+	data, err := vault.Vault.ToByte()
 	if err != nil {
 		color.Red(err.Error())
 	}
-	files.WriteFile(data, "JSONbase.json")
+	vault.db.Write(data)
 	return isDeleted
 }
 
-func (vault *Vault) AddAccount(acc Account) {
+func (vault *VaultWithDB) AddAccount(acc Account) {
 	vault.Accounts = append(vault.Accounts, acc)
 	vault.UpdatedAT = time.Now()
-	data, err := vault.ToByte()
+	data, err := vault.Vault.ToByte()
 	if err != nil {
 		color.Red(err.Error())
 	}
-	files.WriteFile(data, "JSONbase.json")
+	vault.db.Write(data)
 }
 
-func NewVault() *Vault {
-	file, err := files.ReadFile("JSONbase.json")
+func NewVault(db Db) *VaultWithDB {
+	file, err := db.Read()
 	if err != nil {
-		preVault := &Vault{
-			Accounts:  []Account{},
-			UpdatedAT: time.Now(),
+		preVault := &VaultWithDB{
+			Vault: Vault{
+				Accounts:  []Account{},
+				UpdatedAT: time.Now(),
+			},
+			db: db,
 		}
 		return preVault
 	}
@@ -76,6 +96,16 @@ func NewVault() *Vault {
 	err = json.Unmarshal(file, &vault)
 	if err != nil {
 		color.Red(err.Error())
+		return &VaultWithDB{
+			Vault: Vault{
+				Accounts:  []Account{},
+				UpdatedAT: time.Now(),
+			},
+			db: db,
+		}
 	}
-	return &vault
+	return &VaultWithDB{
+		Vault: vault,
+		db:    db,
+	}
 }

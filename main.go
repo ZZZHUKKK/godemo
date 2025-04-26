@@ -2,6 +2,8 @@ package main
 
 import (
 	"demo/password/account"
+	"demo/password/cloud"
+	"demo/password/output"
 
 	"fmt"
 
@@ -10,7 +12,8 @@ import (
 
 func main() {
 	var choice int
-	vault := account.NewVault()
+	// vault := account.NewVault(files.NewJsonDb("JSONbase.json"))
+	vault := account.NewVault(cloud.NewCloudDB("htttp://a.ru"))
 Main:
 	for {
 		fmt.Println(`Введите цифру:
@@ -32,34 +35,34 @@ Main:
 	}
 }
 
-func findAccount(vault *account.Vault) {
+func findAccount(vault *account.VaultWithDB) {
 	url := promptData("Введите url: ")
 	accounts := vault.FindAcc(url)
 	if len(accounts) == 0 {
-		color.Red("Акаунтов не найдено")
+		output.Output("Акаунтов не найдено")
 	}
 	for _, acc := range accounts {
 		acc.Output()
 	}
 
 }
-func deleteAccount(vault *account.Vault) {
+func deleteAccount(vault *account.VaultWithDB) {
 	url := promptData("Введите url: ")
 	isDeleted := vault.DeleteAcc(url)
 	if isDeleted {
 		color.Green("Аккаунт удален")
 	} else {
-		color.Red("Не найдено")
+		output.Output("Не найдено")
 	}
 }
 
-func createAccount(vault *account.Vault) {
+func createAccount(vault *account.VaultWithDB) {
 	login := promptData("Введите логин")
 	password := promptData("Введите пароль")
 	url := promptData("Введите URL")
 	myAccount, err := account.NewAccount(login, password, url)
 	if err != nil {
-		fmt.Println("Неверный формат URL или Login")
+		output.Output("Неверный формат URL или Login")
 		return
 	}
 	fmt.Println(myAccount)
