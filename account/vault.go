@@ -1,6 +1,7 @@
 package account
 
 import (
+	"demo/password/output"
 	"encoding/json"
 	"strings"
 	"time"
@@ -39,10 +40,10 @@ func (vault *Vault) ToByte() ([]byte, error) {
 	return data, nil
 }
 
-func (vault *VaultWithDB) FindAcc(urlAcc string) []Account {
+func (vault *VaultWithDB) FindAcc(str string, checker func(Account, string) bool) []Account {
 	var accounts []Account
 	for _, account := range vault.Accounts {
-		if strings.Contains(account.Url, urlAcc) {
+		if checker(account, str) {
 			accounts = append(accounts, account)
 		}
 	}
@@ -64,7 +65,7 @@ func (vault *VaultWithDB) DeleteAcc(urlAcc string) bool {
 	vault.UpdatedAT = time.Now()
 	data, err := vault.Vault.ToByte()
 	if err != nil {
-		color.Red(err.Error())
+		output.Output(err)
 	}
 	vault.db.Write(data)
 	return isDeleted
@@ -75,7 +76,7 @@ func (vault *VaultWithDB) AddAccount(acc Account) {
 	vault.UpdatedAT = time.Now()
 	data, err := vault.Vault.ToByte()
 	if err != nil {
-		color.Red(err.Error())
+		output.Output(err.Error())
 	}
 	vault.db.Write(data)
 }
