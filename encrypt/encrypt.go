@@ -4,22 +4,28 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
+	"encoding/hex"
+	"errors"
 	"io"
 	"os"
 )
 
 type Encrypt struct {
-	Key string
+	Key []byte
 }
 
-func NewEncrypt() *Encrypt {
-	key := os.Getenv("KEY")
-	if key == "" {
-		panic("Не передан парметр KEY в .env")
+func NewEncrypt() (*Encrypt, error) {
+	hexKey := os.Getenv("KEY")
+	if hexKey == "" {
+		return nil, errors.New("переменная KEY не задана")
+	}
+	key, err := hex.DecodeString(hexKey)
+	if err != nil {
+		return nil, errors.New("ключ должен быть в hex-формате")
 	}
 	return &Encrypt{
 		Key: key,
-	}
+	}, nil
 }
 
 func (enc *Encrypt) Encrypt(str []byte) []byte {

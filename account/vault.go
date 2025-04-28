@@ -69,7 +69,8 @@ func (vault *VaultWithDB) DeleteAcc(urlAcc string) bool {
 	if err != nil {
 		output.Output(err)
 	}
-	vault.db.Write(data)
+	encData := vault.enc.Encrypt(data)
+	vault.db.Write(encData)
 	return isDeleted
 }
 
@@ -80,7 +81,8 @@ func (vault *VaultWithDB) AddAccount(acc Account) {
 	if err != nil {
 		output.Output(err.Error())
 	}
-	vault.db.Write(data)
+	encData := vault.enc.Encrypt(data)
+	vault.db.Write(encData)
 }
 
 func NewVault(db Db, enc encrypt.Encrypt) *VaultWithDB {
@@ -96,8 +98,9 @@ func NewVault(db Db, enc encrypt.Encrypt) *VaultWithDB {
 		}
 		return preVault
 	}
+	data := enc.Decrypt(file)
 	var vault Vault
-	err = json.Unmarshal(file, &vault)
+	err = json.Unmarshal(data, &vault)
 	if err != nil {
 		color.Red(err.Error())
 		return &VaultWithDB{

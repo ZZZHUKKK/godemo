@@ -34,7 +34,8 @@ func main() {
 		color.Red("Error loading .env file")
 	}
 	var choice string
-	vault := account.NewVault(files.NewJsonDb("JSONbase.json"), *encrypt.NewEncrypt())
+	enc, _ := encrypt.NewEncrypt()
+	vault := account.NewVault(files.NewJsonDb("data.vault"), *enc)
 	//vault := account.NewVault(cloud.NewCloudDB("htttp://a.ru"))
 	// counter := menuCounter()
 Main:
