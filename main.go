@@ -2,6 +2,7 @@ package main
 
 import (
 	"demo/password/account"
+	"demo/password/encrypt"
 	"demo/password/files"
 	"demo/password/output"
 	"strings"
@@ -9,6 +10,7 @@ import (
 	"fmt"
 
 	"github.com/fatih/color"
+	"github.com/joho/godotenv"
 )
 
 var menuMap = map[string]func(*account.VaultWithDB){
@@ -18,12 +20,26 @@ var menuMap = map[string]func(*account.VaultWithDB){
 	"4": deleteAccount,
 }
 
+// func menuCounter() func() {
+// 	i := 0
+// 	return func() {
+// 		i++
+// 		fmt.Println(i)
+// 	}
+// }
+
 func main() {
+	err := godotenv.Load()
+	if err != nil {
+		color.Red("Error loading .env file")
+	}
 	var choice string
-	vault := account.NewVault(files.NewJsonDb("JSONbase.json"))
+	vault := account.NewVault(files.NewJsonDb("JSONbase.json"), *encrypt.NewEncrypt())
 	//vault := account.NewVault(cloud.NewCloudDB("htttp://a.ru"))
+	// counter := menuCounter()
 Main:
 	for {
+		// counter()
 		menu := []string{"1: Создать аккаунт", "2: Найти аккаунт по URL", "3: Найти аккаунт по Login", "4: Удалить аккаунт", "5: Exit", "Введите цифру"}
 		choice = promptData(menu)
 		menuFunc := menuMap[choice]
@@ -45,7 +61,7 @@ Main:
 }
 
 func findAccountUrl(vault *account.VaultWithDB) {
-	url := promptData([]string{"Введите url: "})
+	url := promptData("Введите url: ")
 	accounts := vault.FindAcc(url, func(acc account.Account, str string) bool {
 		return strings.Contains(acc.Url, str)
 	})
@@ -53,7 +69,7 @@ func findAccountUrl(vault *account.VaultWithDB) {
 }
 
 func findAccountLogin(vault *account.VaultWithDB) {
-	login := promptData([]string{"Введите login: "})
+	login := promptData("Введите login: ")
 	accounts := vault.FindAcc(login, func(acc account.Account, str string) bool {
 		return strings.Contains(acc.Login, str)
 	})
@@ -70,7 +86,7 @@ func outputRes(accounts *[]account.Account) {
 }
 
 func deleteAccount(vault *account.VaultWithDB) {
-	url := promptData([]string{"Введите url: "})
+	url := promptData("Введите url: ")
 	isDeleted := vault.DeleteAcc(url)
 	if isDeleted {
 		color.Green("Аккаунт удален")
@@ -80,9 +96,9 @@ func deleteAccount(vault *account.VaultWithDB) {
 }
 
 func createAccount(vault *account.VaultWithDB) {
-	login := promptData([]string{"Введите логин"})
-	password := promptData([]string{"Введите пароль"})
-	url := promptData([]string{"Введите URL"})
+	login := promptData("Введите логин")
+	password := promptData("Введите пароль")
+	url := promptData("Введите URL")
 	myAccount, err := account.NewAccount(login, password, url)
 	if err != nil {
 		output.Output("Неверный формат URL или Login")
@@ -92,7 +108,7 @@ func createAccount(vault *account.VaultWithDB) {
 	vault.AddAccount(*myAccount)
 }
 
-func promptData[T any](prompt []T) string {
+func promptData(prompt ...any) string {
 	for i, line := range prompt {
 		if i == len(prompt)-1 {
 			fmt.Printf("%v: ", line)

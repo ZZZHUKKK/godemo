@@ -1,6 +1,7 @@
 package account
 
 import (
+	"demo/password/encrypt"
 	"demo/password/output"
 	"encoding/json"
 	"strings"
@@ -24,7 +25,8 @@ type Db interface {
 
 type VaultWithDB struct {
 	Vault
-	db Db
+	db  Db
+	enc encrypt.Encrypt
 }
 
 type Vault struct {
@@ -81,7 +83,7 @@ func (vault *VaultWithDB) AddAccount(acc Account) {
 	vault.db.Write(data)
 }
 
-func NewVault(db Db) *VaultWithDB {
+func NewVault(db Db, enc encrypt.Encrypt) *VaultWithDB {
 	file, err := db.Read()
 	if err != nil {
 		preVault := &VaultWithDB{
@@ -89,7 +91,8 @@ func NewVault(db Db) *VaultWithDB {
 				Accounts:  []Account{},
 				UpdatedAT: time.Now(),
 			},
-			db: db,
+			db:  db,
+			enc: enc,
 		}
 		return preVault
 	}
@@ -102,11 +105,13 @@ func NewVault(db Db) *VaultWithDB {
 				Accounts:  []Account{},
 				UpdatedAT: time.Now(),
 			},
-			db: db,
+			db:  db,
+			enc: enc,
 		}
 	}
 	return &VaultWithDB{
 		Vault: vault,
 		db:    db,
+		enc:   enc,
 	}
 }
